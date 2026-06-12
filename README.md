@@ -26,6 +26,38 @@ Follow these precise steps to graft this library into thine own Lua endeavor:
    ```lua
    local json = require("json/json")
 
+```
+## Examples of the Craft
+### 1. Translating a Lua Table into JSON Text (Encoding)
+Shouldst thou desire to convert thy native Lua structures into a clean JSON parchment, employ this method:
+```lua
+local json = require("json/json")
+
+local character_profile = {
+    username = "CoolyDucks",
+    guild = "TheDevinLabs",
+    is_active = true,
+    projects_count = 3,
+    languages = { "Lua", "JSON", "Markdown" }
+}
+
+-- Turn the structure into a string of text
+local json_parchment = json.encode(character_profile)
+print(json_parchment)
+
+```
+### 2. Translating JSON Text Back into Lua (Decoding)
+When receiving raw JSON text from a ledger or file, thou canst easily restore it back into a proper Lua table:
+```lua
+local json = require("json/json")
+
+local raw_scroll = '{"guild": "TheDevinLabs", "status": "Active"}'
+
+-- Decode the raw text into a usable table
+local data_table = json.decode(raw_scroll)
+print("The Guild Name is: " .. data_table.guild)
+
+```
 ## License & Covenant of Fair Use
 This work is bound by the terms of the BSD 2-Clause Simplified License.
  * **An Open Source:** Thou art granted full liberty to employ, alter, and distribute these codes as seest fit.
