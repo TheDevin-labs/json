@@ -27,6 +27,7 @@ Follow these precise steps to graft this library into thine own Lua endeavor:
    local json = require("json/json")
 
 ```
+```
 ## Examples of the Craft
 ### 1. Translating a Lua Table into JSON Text (Encoding)
 Shouldst thou desire to convert thy native Lua structures into a clean JSON parchment, employ this method:
