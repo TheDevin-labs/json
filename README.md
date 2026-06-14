@@ -12,9 +12,8 @@ A most wondrous, lightweight, and local library, fashioned in the native tongue 
 
 ## Notable Attributes
 
-* **On File Stewardship:** Containeth a dedicated module (`PathFiles.lua`) to navigate and govern thy file systems with great ease.
-* **On Strict Fidelity:** Containeth a superstring module (`superstring.lua`) that enforceth RFC 8259 compliance and extendeth the tongue of JSON with the words `yes` and `no`.
-* **On Great Errors:** Containeth an error module (`greaterror.lua`) that speaketh loudly and clearly when things go awry, adorning each fault with colour, trace, and counsel.
+* **One True Scroll:** All power dwelleth within `json.lua` alone. Superstring and Great Errors are built in — no separate require needed to unlock them.
+* **On File Stewardship:** Containeth a companion scroll (`PathFiles.lua`) to navigate and govern thy file systems with great ease.
 * **Swift & Unburdened:** Wrought in pure Lua, demanding no external alliances nor strange dependencies.
 * **Secure & Recluse:** Absent of all internet commerce, thereby ensuring the absolute privacy of thy data.
 
@@ -22,21 +21,21 @@ A most wondrous, lightweight, and local library, fashioned in the native tongue 
 
 ## The Scrolls of This Library
 
-| Scroll | Purpose |
+| Scroll | Role |
 |---|---|
-| `json.lua` | The core — encoding, decoding, and file I/O |
+| `json.lua` | The one true core — encoding, decoding, strict mode, superstring, great errors, and file I/O |
 | `PathFiles.lua` | File and directory stewardship |
-| `superstring.lua` | RFC 8259 strictness and the `yes`/`no` tongue |
-| `greaterror.lua` | The Great Error — loud, coloured, and wise |
+| `superstring.lua` | Thin companion — `yes`/`no` mode pre-enabled for convenience |
+| `greaterror.lua` | Thin companion — error display controls for convenience |
 | `lua.mod` | The module manifest |
+
+> `superstring.lua` and `greaterror.lua` are **companion scrolls**, not separate engines. Their powers already live inside `json.lua`. They exist purely so thou needst not pass options by hand every time.
 
 ---
 
 ## How One May Import This Craft
 
-Follow these precise steps to graft this library into thine own Lua endeavor:
-
-**1. Deposit the Files:** Convey all scrolls into a designated folder inside thy project directory, perchance named `json`:
+**1. Deposit the Files** into a folder inside thy project, perchance named `json`:
 
 ```
 your-project/
@@ -48,22 +47,75 @@ your-project/
     └── lua.mod
 ```
 
-**2. Invoke the Code:** Bind the library at the very summit of thy script:
+**2. Invoke the Core** at the summit of thy script:
 
 ```lua
-local json        = require("json/json")
-local PathFiles   = require("json/PathFiles")
-local superstring = require("json/superstring")
-local greaterror  = require("json/greaterror")
+local json = require("json/json")
 ```
+
+That single line unlocketh everything — encoding, decoding, strict mode, superstring tokens, great errors, and file I/O.
+
+---
+
+## Making This Library a Standard — Call It from Anywhere
+
+If thou desirest to call `json` from any script in thy project without writing `require("json/json")` each time, thou mayest install it as a standard library in one of two ways:
+
+### Way the First — The `package.path` Declaration
+
+At the very top of thy main entry script, extend Lua's search path:
+
+```lua
+package.path = package.path .. ";./json/?.lua"
+
+local json = require("json")
+```
+
+From this point onward, any script that runs beneath thy main script may call `require("json")` directly, without a folder prefix.
+
+### Way the Second — The Global Declaration
+
+If thou desirest `json` to be available everywhere without even calling `require`, place this at the very top of thy main entry script:
+
+```lua
+package.path = package.path .. ";./json/?.lua"
+json = require("json")
+```
+
+Note the absence of `local`. This maketh `json` a global name, visible to every script and every module that runs thereafter, as if it were a built-in part of the language itself.
+
+```lua
+local data = json.decode('{"guild":"TheDevinLabs"}')
+print(data.guild)
+```
+
+### Way the Third — Installing to Lua's System Path (Termux / Linux)
+
+If thou art on Termux or Linux and desirest the library to be available system-wide across all projects:
+
+```sh
+cp json.lua PathFiles.lua superstring.lua greaterror.lua /data/data/com.termux/files/usr/share/lua/5.4/
+```
+
+Or on a standard Linux machine:
+
+```sh
+sudo cp json.lua PathFiles.lua superstring.lua greaterror.lua /usr/local/share/lua/5.4/
+```
+
+After this, any Lua script on the machine may call:
+
+```lua
+local json = require("json")
+```
+
+With no folder, no path extension, no ceremony whatsoever.
 
 ---
 
 ## Examples of the Craft
 
 ### 1. Translating a Lua Table into JSON Text (Encoding)
-
-Shouldst thou desire to convert thy native Lua structures into a clean JSON parchment, employ this method:
 
 ```lua
 local json = require("json/json")
@@ -80,16 +132,14 @@ local json_parchment = json.encode(character_profile)
 print(json_parchment)
 ```
 
-For a more readable parchment, thou mayest invoke the pretty option:
+For a more readable parchment:
 
 ```lua
-local json_parchment = json.encode(character_profile, { pretty = true, sort_keys = true })
-print(json_parchment)
+local pretty = json.encode(character_profile, { pretty = true, sort_keys = true })
+print(pretty)
 ```
 
 ### 2. Translating JSON Text Back into Lua (Decoding)
-
-When receiving raw JSON text from a ledger or file, thou canst easily restore it back into a proper Lua table:
 
 ```lua
 local json = require("json/json")
@@ -102,11 +152,7 @@ print("The Guild Name is: " .. data_table.guild)
 
 ### 3. Reading and Writing JSON Files
 
-When thy data must be kept in a file for safekeeping:
-
 ```lua
-local json = require("json/json")
-
 local profile = { name = "CoolyDucks", level = 42 }
 
 json.encode_file("save.json", profile, { pretty = true })
@@ -115,7 +161,7 @@ local loaded = json.decode_file("save.json")
 print(loaded.name)
 ```
 
-For appending many records line by line (a log or journal):
+For a running journal of events:
 
 ```lua
 json.append_file("log.ndjson", { event = "login",  user = "CoolyDucks" })
@@ -129,9 +175,160 @@ end
 
 ---
 
+## Superstring — The Yes and No Tongue
+
+Superstring mode is built directly into `json.lua`. Pass `{ superstring = true }` to any encode or decode call:
+
+```lua
+json.encode({ active = true, banned = false }, { superstring = true })
+-- {"active":yes,"banned":no}
+
+json.decode('{"active":yes,"banned":no}', { superstring = true })
+-- { active = true, banned = false }
+
+json.decode('[yes, no, true, false]', { superstring = true })
+-- { true, false, true, false }
+```
+
+Or use the `superstring.lua` companion, which hath `{ superstring = true }` pre-applied so thou needst not write it each time:
+
+```lua
+local superstring = require("json/superstring")
+
+superstring.encode({ active = true })
+-- {"active":yes}
+
+superstring.decode('{"active":yes}')
+-- { active = true }
+```
+
+### Superstring Token Reference
+
+| Token | Decoded As |
+|---|---|
+| `true` | `true` |
+| `false` | `false` |
+| `yes` | `true` |
+| `no` | `false` |
+| `null` | `json.null` |
+
+`null` always taketh precedence over `no` — the parser checketh `null` first, so there is no ambiguity between the two.
+
+---
+
+## Strict Mode — RFC 8259 Fidelity
+
+Strict mode is built directly into `json.lua`. Pass `{ strict = true }`:
+
+```lua
+json.decode('{"a":1,"a":2}', { strict = true })
+-- Great Error: duplicate key "a" not allowed (RFC 8259)
+
+json.decode('01', { strict = true })
+-- Great Error: leading zeros not allowed (RFC 8259)
+
+json.encode({ n = 0/0 }, { strict = true })
+-- Great Error: non-finite number is not allowed in strict mode
+```
+
+Both modes may be combined:
+
+```lua
+json.decode('{"enabled":yes,"count":42}', { strict = true, superstring = true })
+-- { enabled = true, count = 42 }
+```
+
+### Validation
+
+```lua
+local ok = json.validate('{"a":1}')
+-- true
+
+local ok, err = json.validate('{"a":1,"a":2}')
+-- false, "duplicate key..."
+
+json.is_valid_utf8("héllo")   -- true
+json.is_valid_utf8("\xFF")    -- false
+```
+
+---
+
+## The Great Error
+
+When things go awry, `json.lua` speaketh loudly. Instead of a bare `nil` or a plain Lua error, it printeth to stderr in full colour with source, message, detail, hint, and stack trace:
+
+```
+╔══ ERROR ══════════════════════════════════════╗
+║  source  : json.decode
+║  message : unexpected character "}" at position 13
+║  detail  : got: "}"
+║  hint    : check for invalid characters or unquoted strings
+║  trace   :
+║    at myscript.lua:10
+╚═══════════════════════════════════════════════╝
+```
+
+This requireth nothing from thee — it simply happeneth whenever a fault is detected.
+
+### Configuring the Great Error from json.lua
+
+```lua
+json.error_set_color(false)
+json.error_set_trace(false)
+json.error_set_level(json.WARNING)
+json.error_reset()
+```
+
+`error_set_color(false)` — disableth ANSI colour codes, useful when writing to a plain log file.
+`error_set_trace(false)` — disableth the stack trace lines.
+`error_set_level(level)` — setteth the minimum severity that will be displayed. Levels are `json.FATAL`, `json.ERROR`, `json.WARNING`, `json.INFO`.
+`error_reset()` — restoreth all settings to their defaults.
+
+### Installing a Custom Handler
+
+If thou desirest to redirect errors to thy own logging system:
+
+```lua
+json.error_set_handler(function(level, source, message, detail, hint, formatted)
+    my_logger.write(level.label .. " [" .. source .. "] " .. message)
+end)
+```
+
+When a handler is installed, the default stderr output is suppressed entirely.
+
+### Using the greaterror.lua Companion
+
+If thou preferest to configure error display through a dedicated name:
+
+```lua
+local greaterror = require("json/greaterror")
+
+greaterror.set_color(false)
+greaterror.set_trace(false)
+greaterror.set_level(greaterror.WARNING)
+greaterror.reset()
+
+greaterror.set_handler(function(level, source, message, detail, hint, formatted)
+    my_logger.write(formatted)
+end)
+```
+
+This is identical to calling `json.error_*` — the companion merely giveth it a different name for readability.
+
+### Severity Levels
+
+| Level | Behaviour |
+|---|---|
+| `json.FATAL` | Print Great Error + `os.exit(1)` |
+| `json.ERROR` | Print Great Error + raise Lua error |
+| `json.WARNING` | Print only, never raise |
+| `json.INFO` | Print only, never raise |
+
+---
+
 ## The PathFiles Module
 
-`PathFiles.lua` governeth all file and directory dealings without need of json itself.
+`PathFiles.lua` governeth all file and directory dealings.
 
 ```lua
 local PathFiles = require("json/PathFiles")
@@ -155,9 +352,9 @@ PathFiles.append("file.txt", "\nmore words")
 ### Checking
 
 ```lua
-PathFiles.exists("file.txt")      -- true or false
-PathFiles.is_file("file.txt")     -- true or false
-PathFiles.is_dir("some/folder")   -- true or false
+PathFiles.exists("file.txt")
+PathFiles.is_file("file.txt")
+PathFiles.is_dir("some/folder")
 ```
 
 ### Moving and Copying
@@ -187,230 +384,13 @@ PathFiles.stem("path/to/file.txt")         -- file
 
 ---
 
-## The Superstring Module
-
-`superstring.lua` extendeth json with RFC 8259 strictness and the power of `yes` and `no` as boolean tokens.
-
-```lua
-local superstring = require("json/superstring")
-```
-
-### Encoding with Superstring
-
-```lua
-superstring.encode({ active = true, banned = false }, { superstring = true })
--- {"active":yes,"banned":no}
-
-superstring.encode({ active = true }, { superstring = true, pretty = true })
--- {
---   "active": yes
--- }
-```
-
-### Decoding with Superstring
-
-```lua
-superstring.decode('{"active":yes,"banned":no}', { superstring = true })
--- { active = true, banned = false }
-
-superstring.decode('[yes, no, true, false]', { superstring = true })
--- { true, false, true, false }
-```
-
-### Strict Mode (RFC 8259)
-
-```lua
-superstring.decode('{"a":1,"a":2}', { strict = true })
--- error: duplicate key "a" not allowed (RFC 8259)
-
-superstring.decode('01', { strict = true })
--- error: leading zeros not allowed (RFC 8259)
-```
-
-### Both Together
-
-```lua
-local data = superstring.decode(
-    '{"enabled":yes,"count":42}',
-    { strict = true, superstring = true }
-)
-```
-
-### Validation
-
-```lua
-local ok = superstring.validate('{"a":1}')
--- true
-
-local ok, err = superstring.validate('{"a":1,"a":2}')
--- false, "duplicate key..."
-
-superstring.is_valid_utf8("héllo")   -- true
-superstring.is_valid_utf8("\xFF")    -- false
-```
-
-### Superstring Token Reference
-
-| Token | Decoded As |
-|---|---|
-| `true` | `true` |
-| `false` | `false` |
-| `yes` *(superstring mode)* | `true` |
-| `no` *(superstring mode)* | `false` |
-| `null` | `superstring.null` |
-
----
-
-## The Great Error Module
-
-`greaterror.lua` replaceth the silent `nil` errors of common Lua with loud, coloured, informative proclamations. Each error hath a source, a message, optional detail, an optional hint, and a stack trace.
-
-```lua
-local greaterror = require("json/greaterror")
-```
-
-When a Great Error fires, it printeth to stderr in this manner:
-
-```
-╔══ ERROR ══════════════════════════════════════╗
-║  source  : json.decode
-║  message : unexpected character "}" at position 13
-║  detail  : parse failed at byte position 13
-║  hint    : check for malformed JSON near position 13
-║  trace   :
-║    at myfile.lua:10
-║    at myfile.lua:5
-╚═══════════════════════════════════════════════╝
-```
-
-### Raising Errors Directly
-
-```lua
-greaterror.error("mymodule", "something went wrong")
-greaterror.error("mymodule", "something went wrong", "the value was nil", "check your input")
-
-greaterror.warn("mymodule", "this value is deprecated")
-greaterror.info("mymodule", "loaded successfully")
-greaterror.fatal("mymodule", "cannot continue")
-```
-
-`fatal` printeth the error and calleth `os.exit(1)`.
-`error` printeth and then raiseth a Lua error.
-`warn` and `info` print only.
-
-### Using `greaterror.try`
-
-Wrappeth a function call and catcheth any error it raiseth, printing it as a Great Error:
-
-```lua
-greaterror.try(function()
-    json.decode("bad {json")
-end, "json.decode")
-```
-
-### Using `greaterror.wrap`
-
-Returneth a new function that catcheth errors automatically every time it is called:
-
-```lua
-local safe_decode = greaterror.wrap(json.decode, "json.decode")
-
-local result = safe_decode('{"a":1}')
-local result2 = safe_decode("bad {json")
-```
-
-### Using `greaterror.from_json`
-
-The most powerful pairing — wrappeth any json or superstring call and produceth a Great Error with context-aware hints:
-
-```lua
-local greaterror = require("json/greaterror")
-local json       = require("json/json")
-
-local result = greaterror.from_json(function()
-    return json.decode('{"a":1,"a":2}')
-end, "json.decode")
-
-local result2 = greaterror.from_json(function()
-    return json.decode_file("missing.json")
-end, "json.decode_file")
-```
-
-Hints are chosen automatically based on the kind of fault:
-
-| Fault | Hint Given |
-|---|---|
-| Malformed JSON | Position of the offending character |
-| Circular reference | Remove circular references before encoding |
-| Max depth exceeded | Reduce nesting or increase MAX\_DEPTH |
-| Duplicate key | Remove duplicates or disable strict mode |
-| Leading zeros | RFC 8259 forbids leading zeros |
-| Bad UTF-8 | Ensure strings are valid UTF-8 |
-| PathFiles missing | Ensure PathFiles.lua is beside json.lua |
-
-### Configuring the Great Error
-
-```lua
-greaterror.set_level(greaterror.WARNING)
-```
-
-Only warnings and above will be displayed. Below the level, errors are silently ignored.
-
-| Level | Code | Behaviour |
-|---|---|---|
-| `greaterror.FATAL` | 1 | Print + `os.exit(1)` |
-| `greaterror.ERROR` | 2 | Print + raise Lua error |
-| `greaterror.WARNING` | 3 | Print only |
-| `greaterror.INFO` | 4 | Print only |
-
-```lua
-greaterror.set_trace(false)
-greaterror.set_color(false)
-greaterror.reset()
-```
-
-`set_trace(false)` — disableth the stack trace in output.
-`set_color(false)` — disableth ANSI colour codes (useful for plain log files).
-`reset()` — restoreth all settings to their defaults.
-
-### Custom Handler
-
-Thou mayest install thine own handler to receive errors however thou seest fit:
-
-```lua
-greaterror.set_handler(function(level, source, message, detail, hint, formatted)
-    my_log_system.write(level.label, source, message)
-end)
-```
-
-When a handler is installed, the default stderr output is suppressed entirely.
-
----
-
-## Error Handling Reference
-
-All functions throughout this library raise Lua errors on failure. The recommended pattern is `pcall` for fine-grained control, or `greaterror.from_json` for rich output:
-
-```lua
-local ok, result = pcall(json.decode, '{"bad":}')
-if not ok then
-    print("caught:", result)
-end
-
-local result = greaterror.from_json(function()
-    return json.decode('{"bad":}')
-end, "my script")
-```
-
----
-
 ## Behaviour Reference
 
 | Situation | Behaviour |
 |---|---|
-| `nan` / `inf` in encode | Encoded as `null` (error in strict mode) |
-| Circular reference | Error thrown |
-| Depth over 512 | Error thrown |
+| `nan` / `inf` in encode | Encoded as `null` — Great Error in strict mode |
+| Circular reference | Great Error thrown |
+| Depth over 512 | Great Error thrown |
 | `nil` value in table | Key skipped silently |
 | Mixed table (int + string keys) | Encoded as object |
 | Sequential integer keys | Encoded as array |
@@ -418,9 +398,9 @@ end, "my script")
 | `\uXXXX` escape in decode | Converted to UTF-8 |
 | Surrogate pairs `\uD800\uDC00` | Correctly decoded to UTF-8 |
 | JSON `null` decoded | Returns `json.null` sentinel |
-| Trailing garbage | Error thrown |
-| Duplicate keys in strict mode | Error thrown |
-| Leading zeros in strict mode | Error thrown |
+| Trailing garbage | Great Error thrown |
+| Duplicate keys in strict mode | Great Error thrown |
+| Leading zeros in strict mode | Great Error thrown |
 | `yes` / `no` in superstring mode | Decoded as `true` / `false` |
 
 ---
