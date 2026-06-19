@@ -1,11 +1,10 @@
 FROM opensuse/tumbleweed:latest
 
 RUN zypper refresh && \
-    zypper --non-interactive install lua54
+    zypper --non-interactive install lua54 curl
 
-WORKDIR /usr/src/json-master
+WORKDIR /app
 
- 
 COPY . .
 
 CMD [ "lua5.4" ]
