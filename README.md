@@ -12,7 +12,7 @@
 ---
 
 > [!WARNING]
-> This is a research snapshot branch. It is not part of the stable release. The pure Lua fallback in `json.lua` remains fully intact — if CluaJIT cannot be built or loaded on your platform, nothing breaks.
+> This is a research snapshot branch. It is not part of the stable release. The pure Lua fallback in `json.lua` remains fully intact — if CluaJIT cannot be built or loaded on your platform, nothing breaks, but you may use it as the branch Research-Luainterpreter-Snapshot-devepolment
 
 ---
 
