@@ -1,81 +1,37 @@
 # CluaJIT
 
-> Native C acceleration layer for the [json](../README.md) library by TheDevinLabs.
-> Branch: `Research-CluaJIT-Snapshot-development`
+> A native C implementation of the json library for Lua.
+> Single shared library. No dependencies. No Lua files.
 
 [![License](https://img.shields.io/badge/License-BSD__2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![Language](https://img.shields.io/badge/Language-C99-blue)
 ![Lua](https://img.shields.io/badge/Lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT-blue)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Android%20%7C%20macOS%20%7C%20Windows-blue)
-![Status](https://img.shields.io/badge/Status-Research%20Snapshot-orange)
+![Branch](https://img.shields.io/badge/Branch-Research--CluaJIT--Snapshot--development-orange)
 
 ---
 
-> [!WARNING]
-> This is a research snapshot branch. It is not part of the stable release. The pure Lua fallback in `json.lua` remains fully intact — if CluaJIT cannot be built or loaded on your platform, nothing breaks, but you may use it as the branch Research-Luainterpreter-Snapshot-devepolment
+## What Is This
 
----
+CluaJIT is the C branch of the [json](../README.md) library by TheDevinLabs.
 
-## Overview
+It reimplements the entire library in a single C file — JSON encode and decode, superstring `yes`/`no` tokens, strict RFC 8259 mode, and all file and path operations — compiled into one `.so`, `.dll`, or `.dylib`.
 
-CluaJIT replaces the inner encode and decode loops of the json library with compiled native C. It is not a separate tool — it is a drop-in acceleration layer. When the compiled modules are present, `json.lua` loads them automatically. When they are absent, the pure Lua engine runs unchanged.
+From Lua, nothing changes:
 
-```
-require("json")
-      │
-      ▼
-tries require("cluajit")  ──found──▶  C engine  (json.c / superstring.c / PathFiles.c)
-      │
-   not found
-      │
-      ▼
-  pure Lua engine  (always works)
+```lua
+local json = require("json")
 ```
 
 ---
 
-## File Structure
+## Files
 
-```
-Research-CluaJIT-Snapshot-development/
-├── cluajit.h         Shared header — Buffer, Parser, constants, declarations
-├── json.c            JSON encode + decode in C
-├── superstring.c     Superstring encode + decode in C (yes/no tokens built in)
-├── PathFiles.c       File and directory operations in C
-├── Makefile          Auto-detecting cross-platform build system
-├── c.mod             Module manifest for this branch
-└── README-CluaJIT.md This file
-```
-
----
-
-## Modules
-
-### `json.c` → `json.so` / `json.dll` / `json.dylib`
-
-Accelerates `json.encode` and `json.decode`. Supports all options: `pretty`, `indent`, `sort_keys`, `strict`. Handles full UTF-8, `\uXXXX` escapes, surrogate pairs, `nan`/`inf` → `null`, max depth 512.
-
-### `superstring.c` → `superstring.so` / `superstring.dll` / `superstring.dylib`
-
-Accelerates `superstring.encode` and `superstring.decode`. Superstring mode (`yes`/`no` tokens) is always active. Supports `strict`, `pretty`, `indent`, `sort_keys`.
-
-### `PathFiles.c` → `pathfiles.so` / `pathfiles.dll` / `pathfiles.dylib`
-
-Replaces the shell-based `PathFiles.lua` with pure C system calls. No `io.popen`, no `os.execute`. Full native directory listing, recursive mkdir, stat-based file/dir detection, binary-safe read and write.
-
-### `cluajit.h`
-
-Shared header included by all three modules. Defines `Buffer`, `Parser`, constants (`CLUAJIT_MAX_DEPTH`, `CLUAJIT_BUF_INIT`), Lua version compatibility macros, and all shared function declarations.
-
----
-
-## Requirements
-
-| Requirement | Notes |
+| File | Purpose |
 |---|---|
-| C compiler | gcc, clang, tcc, or MSVC — any C99-capable compiler |
-| Lua headers | `lua.h` and `lauxlib.h` for your installed Lua version |
-| GNU Make | Or any compatible make |
+| `json.c` | The entire library in C |
+| `Makefile` | Auto-detecting cross-platform build |
+| `c.mod` | Module manifest |
 
 ---
 
@@ -87,22 +43,26 @@ Shared header included by all three modules. Defines `Buffer`, `Parser`, constan
 make
 ```
 
-Produces `json.so`, `superstring.so`, `pathfiles.so`.
+Output: `json.so`
 
-Custom Lua header path:
+Custom Lua path:
 
 ```sh
 make LUA_INC="-I/usr/include/lua5.4" LUA_LIB="-llua5.4"
 ```
 
-### Android — Termux (arm64)
+---
+
+### Android — Termux
 
 ```sh
 pkg install clang make lua54
 make
 ```
 
-The Makefile detects `aarch64` automatically and uses Termux paths. Produces `.so` files.
+Output: `json.so`
+
+---
 
 ### macOS
 
@@ -110,7 +70,7 @@ The Makefile detects `aarch64` automatically and uses Termux paths. Produces `.s
 make
 ```
 
-Produces `json.dylib`, `superstring.dylib`, `pathfiles.dylib`.
+Output: `json.dylib`
 
 With Homebrew:
 
@@ -118,196 +78,216 @@ With Homebrew:
 make LUA_INC="-I$(brew --prefix lua)/include/lua5.4"
 ```
 
+---
+
 ### Windows — MinGW
 
 ```sh
 make windows
 ```
 
-Cross-compiles using `x86_64-w64-mingw32-gcc`. Produces `json.dll`, `superstring.dll`, `pathfiles.dll`.
+Output: `json.dll`
 
-Native MSVC:
+MSVC:
 
 ```sh
 cl /O2 /LD json.c /I C:\lua\include /link /LIBPATH:C:\lua lua54.lib /OUT:json.dll
-cl /O2 /LD superstring.c /I C:\lua\include /link /LIBPATH:C:\lua lua54.lib /OUT:superstring.dll
-cl /O2 /LD PathFiles.c /I C:\lua\include /link /LIBPATH:C:\lua lua54.lib /OUT:pathfiles.dll
 ```
 
 ---
 
-## Build Targets
+### Build Targets
 
-| Command | Action |
+| Command | Output |
 |---|---|
-| `make` | Auto-detect platform and build all three modules |
-| `make linux` | Force Linux build |
-| `make android` | Force Android / Termux build |
-| `make macos` | Force macOS build |
-| `make windows` | Force Windows build via MinGW |
-| `make clean` | Remove all `.so`, `.dylib`, `.dll`, `.o` files |
-| `make info` | Print detected platform, arch, compiler, and paths |
+| `make` | Auto-detect and build |
+| `make linux` | `json.so` |
+| `make android` | `json.so` |
+| `make macos` | `json.dylib` |
+| `make windows` | `json.dll` |
+| `make clean` | Remove all build outputs |
+| `make info` | Print detected platform and paths |
 
 ---
 
 ## Installation
 
-After building, place the output files beside `json.lua`:
+Place the output file where Lua can find it — beside your script or in the Lua path:
 
 ```
 your-project/
-└── json/
-    ├── json.lua
-    ├── PathFiles.lua
-    ├── superstring.lua
-    ├── greaterror.lua
-    ├── json.so            ← or .dll / .dylib
-    ├── superstring.so
-    ├── pathfiles.so
-    ├── cluajit.h
-    ├── json.c
-    ├── superstring.c
-    ├── PathFiles.c
-    ├── Makefile
-    └── c.mod
+├── main.lua
+└── json.so     ← or .dll / .dylib
 ```
 
-`json.lua` finds and loads the C modules automatically on the next `require("json")`.
+Or system-wide on Termux:
+
+```sh
+cp json.so /data/data/com.termux/files/usr/lib/lua/5.4/
+```
 
 ---
 
-## Checking the Active Engine
+## API
+
+### `json.encode(val, opts?)`
+
+Encodes a Lua value to a JSON string.
 
 ```lua
-local json = require("json")
+json.encode({ name = "Furry", active = true })
+-- {"active":true,"name":"Furry"}
 
-if json.has_cluajit() then
-    print("C engine active — CluaJIT")
-else
-    print("Pure Lua engine active")
-end
+json.encode({ name = "Furry" }, { pretty = true })
+-- {
+--   "name": "Furry"
+-- }
+
+json.encode({ active = true }, { superstring = true })
+-- {"active":yes}
 ```
 
----
-
-## Feature Coverage
-
-| Feature | `json.c` | `superstring.c` | `PathFiles.c` |
+| Option | Type | Default | Description |
 |---|---|---|---|
-| Encode strings, numbers, booleans | ✅ | ✅ | — |
-| Encode arrays and objects | ✅ | ✅ | — |
-| Encode pretty print + indent | ✅ | ✅ | — |
-| Encode sort keys | ✅ | ✅ | — |
-| Encode `nan`/`inf` → `null` | ✅ | ✅ | — |
-| Encode `yes`/`no` superstring tokens | — | ✅ | — |
-| Decode strings + all escapes | ✅ | ✅ | — |
-| Decode `\uXXXX` unicode | ✅ | ✅ | — |
-| Decode surrogate pairs | ✅ | ✅ | — |
-| Decode `yes`/`no` tokens | — | ✅ | — |
-| Decode strict mode (RFC 8259) | ✅ | ✅ | — |
-| Decode duplicate key rejection | ✅ | ✅ | — |
-| Decode leading zero rejection | ✅ | ✅ | — |
-| Max depth 512 | ✅ | ✅ | — |
-| Read / write files | — | — | ✅ |
-| Append files | — | — | ✅ |
-| Read lines | — | — | ✅ |
-| Delete / rename / copy | — | — | ✅ |
-| Recursive mkdir | — | — | ✅ |
-| Directory listing | — | — | ✅ |
-| is_file / is_dir / size | — | — | ✅ |
-| Path utilities (join, stem, ext) | — | — | ✅ |
+| `pretty` | boolean | false | Indented output |
+| `indent` | number | 2 | Spaces per indent level |
+| `sort_keys` | boolean | false | Sort object keys |
+| `superstring` | boolean | false | Output `yes`/`no` for booleans |
 
 ---
 
-## Lua Version Compatibility
+### `json.decode(str, opts?)`
 
-CluaJIT uses preprocessor guards to support every Lua C API version from the same source:
+Decodes a JSON string into a Lua value.
 
-```c
-#if LUA_VERSION_NUM >= 502
-    luaL_newlib(L, lib);
-#else
-    luaL_register(L, "name", lib);
-#endif
-
-#if LUA_VERSION_NUM >= 503
-    if (lua_isinteger(L, idx)) { ... }
-#endif
+```lua
+json.decode('{"name":"Furry","active":true}')
+json.decode('{"active":yes}', { superstring = true })
+json.decode('{"a":1,"a":2}', { strict = true })  -- error: duplicate key
 ```
 
-| Version | Status |
-|---|---|
-| Lua 5.1 | ✅ |
-| Lua 5.2 | ✅ |
-| Lua 5.3 | ✅ |
-| Lua 5.4 | ✅ |
-| LuaJIT | ✅ |
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `superstring` | boolean | false | Accept `yes`/`no` as boolean tokens |
+| `strict` | boolean | false | RFC 8259 strict mode |
 
 ---
 
-## Platform Compatibility
+### `json.null`
+
+Sentinel value for JSON `null`. Distinct from Lua `nil`.
+
+```lua
+local t = json.decode('{"key":null}')
+if t.key == json.null then
+    print("null")
+end
+print(tostring(json.null))  -- null
+```
+
+---
+
+### `json.validate(str)`
+
+Validates a JSON string under strict RFC 8259 rules.
+
+```lua
+local ok = json.validate('{"a":1}')          -- true
+local ok, err = json.validate('{"a":1,"a":2}') -- false, "duplicate key..."
+```
+
+---
+
+### File I/O
+
+```lua
+json.encode_file("save.json", data, { pretty = true })
+local data = json.decode_file("save.json")
+
+json.append_file("log.ndjson", { event = "login" })
+local entries = json.decode_lines("log.ndjson")
+```
+
+---
+
+### Path and File Operations
+
+```lua
+json.exists("file.json")
+json.read("file.txt")
+json.write("file.txt", "content")
+json.append("file.txt", "more")
+json.delete("file.txt")
+json.rename("old.txt", "new.txt")
+json.copy("src.txt", "dst.txt")
+json.size("file.txt")
+json.mkdir("path/to/dir")
+json.list("some/folder")
+json.is_file("file.txt")
+json.is_dir("folder")
+json.read_lines("file.txt")
+json.join("path", "to", "file.txt")
+json.basename("path/to/file.txt")   -- file.txt
+json.dirname("path/to/file.txt")    -- path/to
+json.extension("path/to/file.txt")  -- txt
+json.stem("path/to/file.txt")       -- file
+```
+
+---
+
+## Superstring Token Reference
+
+| Token | Decoded As |
+|---|---|
+| `true` | `true` |
+| `false` | `false` |
+| `yes` *(superstring mode)* | `true` |
+| `no` *(superstring mode)* | `false` |
+| `null` | `json.null` |
+
+---
+
+## Behaviour Reference
+
+| Situation | Behaviour |
+|---|---|
+| `nan` / `inf` | Encoded as `null` |
+| Circular reference | Error |
+| Depth over 512 | Error |
+| `nil` table value | Key skipped |
+| Sequential integer keys | Array |
+| Mixed / string keys | Object |
+| `\uXXXX` in decode | Converted to UTF-8 |
+| Surrogate pairs | Correctly decoded |
+| Duplicate keys in strict mode | Error |
+| Leading zeros in strict mode | Error |
+| Trailing garbage | Error |
+
+---
+
+## Compatibility
 
 | Platform | Compiler | Status |
 |---|---|---|
 | Linux x86\_64 | gcc / clang | ✅ |
 | Linux arm64 | gcc / clang | ✅ |
 | Android Termux arm64 | clang | ✅ |
-| macOS x86\_64 | clang | ✅ |
-| macOS arm64 (Apple Silicon) | clang | ✅ |
-| Windows x86\_64 | MinGW gcc | ✅ |
-| Windows x86\_64 | MSVC | ✅ |
+| macOS x86\_64 / arm64 | clang | ✅ |
+| Windows x86\_64 | MinGW / MSVC | ✅ |
 
----
-
-## The c.mod Manifest
-
-```
-module cluajit
-
-count as = [library]
-
-lang = C99
-abi  = lua-c-api
-
-include cluajit.h
-include json.c
-include superstring.c
-include PathFiles.c
-include Makefile
-
-targets = [linux, android, macos, windows]
-output  = [json.so, superstring.so, pathfiles.so]
-output  = [json.dylib, superstring.dylib, pathfiles.dylib]
-output  = [json.dll, superstring.dll, pathfiles.dll]
-
-depends on = json
-```
-
----
-
-## Branch Relationship
-
-```
-main
-└── json.lua          Pure Lua — always works
-    PathFiles.lua
-    superstring.lua
-    greaterror.lua
-    lua.mod
-
-Research-CluaJIT-Snapshot-development
-└── json.lua          Updated — loads C modules if present
-    cluajit.h         Shared C header
-    json.c            C encode + decode
-    superstring.c     C superstring encode + decode
-    PathFiles.c       C file operations
-    Makefile
-    c.mod
-```
+| Lua Version | Status |
+|---|---|
+| 5.1 | ✅ |
+| 5.2 | ✅ |
+| 5.3 | ✅ |
+| 5.4 | ✅ |
+| LuaJIT | ✅ |
 
 ---
 
 ## License
 
-BSD 2-Clause — see [LICENSE](../LICENSE).
-Maintained by **TheDevinLabs**.
+BSD 2-Clause — maintained by **TheDevinLabs**
+
+[tenor_gif2254601464405110964.gif](/user_uploads/92126/dVQbjvFQ2T-XTfpJBMx1_yoE/tenor_gif2254601464405110964.gif)
+
