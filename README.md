@@ -1,386 +1,249 @@
-# JSON
+# CluaJIT
 
-A most wondrous, lightweight, and local library, fashioned in the native tongue of Lua for the encoding, decoding, stewardship of JSON metadata, file operations, and the great reporting of errors.
+> A native C implementation of the json library for Lua.
+> Single shared library. No dependencies. No Lua files.
 
 [![License](https://img.shields.io/badge/License-BSD__2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
-![Language](https://img.shields.io/badge/Language-Lua-blue)
+![Language](https://img.shields.io/badge/Language-C99-blue)
+![Lua](https://img.shields.io/badge/Lua-5.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%20LuaJIT-blue)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Android%20%7C%20macOS%20%7C%20Windows-blue)
+![Branch](https://img.shields.io/badge/Branch-Research--CluaJIT--Snapshot--development-orange)
 
 ---
 
-> [!NOTE]
-> Take heed, gentle practitioner! This library abideth wholly in isolation, utterly severed from the global web. Wherefore, whenever a new craft or amendment is brought forth, thou art required to fetch and install it locally upon thy machine. Be not troubled, for no future revision shall break or confound the work thou hast already established.
+## What Is This
 
-## Notable Attributes
+CluaJIT is the C branch of the [json](../README.md) library by TheDevinLabs.
 
-* **One True Scroll:** All power dwelleth within `json.lua` alone. Superstring and Great Errors are built in — no separate require needed to unlock them.
-* **On File Stewardship:** Containeth a companion scroll (`PathFiles.lua`) to navigate and govern thy file systems with great ease.
-* **Swift & Unburdened:** Wrought in pure Lua, demanding no external alliances nor strange dependencies.
-* **Secure & Recluse:** Absent of all internet commerce, thereby ensuring the absolute privacy of thy data.
+It reimplements the entire library in a single C file — JSON encode and decode, superstring `yes`/`no` tokens, strict RFC 8259 mode, and all file and path operations — compiled into one `.so`, `.dll`, or `.dylib`.
+
+From Lua, nothing changes:
+
+```lua
+local json = require("json")
+```
 
 ---
 
-## The Scrolls of This Library
+## Files
 
-| Scroll | Role |
+| File | Purpose |
 |---|---|
-| `json.lua` | The one true core — encoding, decoding, strict mode, superstring, great errors, and file I/O |
-| `PathFiles.lua` | File and directory stewardship |
-| `superstring.lua` | Thin companion — `yes`/`no` mode pre-enabled for convenience |
-| `greaterror.lua` | Thin companion — error display controls for convenience |
-| `lua.mod` | The module manifest |
-
-> `superstring.lua` and `greaterror.lua` are **companion scrolls**, not separate engines. Their powers already live inside `json.lua`. They exist purely so thou needst not pass options by hand every time.
+| `json.c` | The entire library in C |
+| `Makefile` | Auto-detecting cross-platform build |
+| `c.mod` | Module manifest |
 
 ---
 
-## How One May Import This Craft
+## Building
 
-**1. Deposit the Files** into a folder inside thy project, perchance named `json`:
+### Linux
+
+```sh
+make
+```
+
+Output: `json.so`
+
+Custom Lua path:
+
+```sh
+make LUA_INC="-I/usr/include/lua5.4" LUA_LIB="-llua5.4"
+```
+
+---
+
+### Android — Termux
+
+```sh
+pkg install clang make lua54
+make
+```
+
+Output: `json.so`
+
+---
+
+### macOS
+
+```sh
+make
+```
+
+Output: `json.dylib`
+
+With Homebrew:
+
+```sh
+make LUA_INC="-I$(brew --prefix lua)/include/lua5.4"
+```
+
+---
+
+### Windows — MinGW
+
+```sh
+make windows
+```
+
+Output: `json.dll`
+
+MSVC:
+
+```sh
+cl /O2 /LD json.c /I C:\lua\include /link /LIBPATH:C:\lua lua54.lib /OUT:json.dll
+```
+
+---
+
+### Build Targets
+
+| Command | Output |
+|---|---|
+| `make` | Auto-detect and build |
+| `make linux` | `json.so` |
+| `make android` | `json.so` |
+| `make macos` | `json.dylib` |
+| `make windows` | `json.dll` |
+| `make clean` | Remove all build outputs |
+| `make info` | Print detected platform and paths |
+
+---
+
+## Installation
+
+Place the output file where Lua can find it — beside your script or in the Lua path:
 
 ```
 your-project/
-└── json/
-    ├── json.lua
-    ├── PathFiles.lua
-    ├── superstring.lua
-    ├── greaterror.lua
-    └── lua.mod
+├── main.lua
+└── json.so     ← or .dll / .dylib
 ```
 
-**2. Invoke the Core** at the summit of thy script:
-
-```lua
-local json = require("json/json")
-```
-
-That single line unlocketh everything — encoding, decoding, strict mode, superstring tokens, great errors, and file I/O.
-
----
-
-## Making This Library a Standard — Call It from Anywhere
-
-If thou desirest to call `json` from any script in thy project without writing `require("json/json")` each time, thou mayest install it as a standard library in one of two ways:
-
-### Way the First — The `package.path` Declaration
-
-At the very top of thy main entry script, extend Lua's search path:
-
-```lua
-package.path = package.path .. ";./json/?.lua"
-
-local json = require("json")
-```
-
-From this point onward, any script that runs beneath thy main script may call `require("json")` directly, without a folder prefix.
-
-### Way the Second — The Global Declaration
-
-If thou desirest `json` to be available everywhere without even calling `require`, place this at the very top of thy main entry script:
-
-```lua
-package.path = package.path .. ";./json/?.lua"
-json = require("json")
-```
-
-Note the absence of `local`. This maketh `json` a global name, visible to every script and every module that runs thereafter, as if it were a built-in part of the language itself.
-
-```lua
-local data = json.decode('{"guild":"TheDevinLabs"}')
-print(data.guild)
-```
-
-### Way the Third — Installing to Lua's System Path (Termux / Linux)
-
-If thou art on Termux or Linux and desirest the library to be available system-wide across all projects:
+Or system-wide on Termux:
 
 ```sh
-cp json.lua PathFiles.lua superstring.lua greaterror.lua /data/data/com.termux/files/usr/share/lua/5.4/
-```
-
-Or on a standard Linux machine:
-
-```sh
-sudo cp json.lua PathFiles.lua superstring.lua greaterror.lua /usr/local/share/lua/5.4/
-```
-
-After this, any Lua script on the machine may call:
-
-```lua
-local json = require("json")
-```
-
-With no folder, no path extension, no ceremony whatsoever.
-
----
-
-## Examples of the Craft
-
-### 1. Translating a Lua Table into JSON Text (Encoding)
-
-```lua
-local json = require("json/json")
-
-local character_profile = {
-    username       = "CoolyDucks",
-    guild          = "TheDevinLabs",
-    is_active      = true,
-    projects_count = 3,
-    languages      = { "Lua", "JSON", "Markdown" }
-}
-
-local json_parchment = json.encode(character_profile)
-print(json_parchment)
-```
-
-For a more readable parchment:
-
-```lua
-local pretty = json.encode(character_profile, { pretty = true, sort_keys = true })
-print(pretty)
-```
-
-### 2. Translating JSON Text Back into Lua (Decoding)
-
-```lua
-local json = require("json/json")
-
-local raw_scroll = '{"guild": "TheDevinLabs", "status": "Active"}'
-
-local data_table = json.decode(raw_scroll)
-print("The Guild Name is: " .. data_table.guild)
-```
-
-### 3. Reading and Writing JSON Files
-
-```lua
-local profile = { name = "CoolyDucks", level = 42 }
-
-json.encode_file("save.json", profile, { pretty = true })
-
-local loaded = json.decode_file("save.json")
-print(loaded.name)
-```
-
-For a running journal of events:
-
-```lua
-json.append_file("log.ndjson", { event = "login",  user = "CoolyDucks" })
-json.append_file("log.ndjson", { event = "logout", user = "CoolyDucks" })
-
-local entries = json.decode_lines("log.ndjson")
-for _, entry in ipairs(entries) do
-    print(entry.event, entry.user)
-end
+cp json.so /data/data/com.termux/files/usr/lib/lua/5.4/
 ```
 
 ---
 
-## Superstring — The Yes and No Tongue
+## API
 
-Superstring mode is built directly into `json.lua`. Pass `{ superstring = true }` to any encode or decode call:
+### `json.encode(val, opts?)`
 
-```lua
-json.encode({ active = true, banned = false }, { superstring = true })
--- {"active":yes,"banned":no}
-
-json.decode('{"active":yes,"banned":no}', { superstring = true })
--- { active = true, banned = false }
-
-json.decode('[yes, no, true, false]', { superstring = true })
--- { true, false, true, false }
-```
-
-Or use the `superstring.lua` companion, which hath `{ superstring = true }` pre-applied so thou needst not write it each time:
+Encodes a Lua value to a JSON string.
 
 ```lua
-local superstring = require("json/superstring")
+json.encode({ name = "Furry", active = true })
+-- {"active":true,"name":"Furry"}
 
-superstring.encode({ active = true })
+json.encode({ name = "Furry" }, { pretty = true })
+-- {
+--   "name": "Furry"
+-- }
+
+json.encode({ active = true }, { superstring = true })
 -- {"active":yes}
-
-superstring.decode('{"active":yes}')
--- { active = true }
 ```
 
-### Superstring Token Reference
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pretty` | boolean | false | Indented output |
+| `indent` | number | 2 | Spaces per indent level |
+| `sort_keys` | boolean | false | Sort object keys |
+| `superstring` | boolean | false | Output `yes`/`no` for booleans |
+
+---
+
+### `json.decode(str, opts?)`
+
+Decodes a JSON string into a Lua value.
+
+```lua
+json.decode('{"name":"Furry","active":true}')
+json.decode('{"active":yes}', { superstring = true })
+json.decode('{"a":1,"a":2}', { strict = true })  -- error: duplicate key
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `superstring` | boolean | false | Accept `yes`/`no` as boolean tokens |
+| `strict` | boolean | false | RFC 8259 strict mode |
+
+---
+
+### `json.null`
+
+Sentinel value for JSON `null`. Distinct from Lua `nil`.
+
+```lua
+local t = json.decode('{"key":null}')
+if t.key == json.null then
+    print("null")
+end
+print(tostring(json.null))  -- null
+```
+
+---
+
+### `json.validate(str)`
+
+Validates a JSON string under strict RFC 8259 rules.
+
+```lua
+local ok = json.validate('{"a":1}')          -- true
+local ok, err = json.validate('{"a":1,"a":2}') -- false, "duplicate key..."
+```
+
+---
+
+### File I/O
+
+```lua
+json.encode_file("save.json", data, { pretty = true })
+local data = json.decode_file("save.json")
+
+json.append_file("log.ndjson", { event = "login" })
+local entries = json.decode_lines("log.ndjson")
+```
+
+---
+
+### Path and File Operations
+
+```lua
+json.exists("file.json")
+json.read("file.txt")
+json.write("file.txt", "content")
+json.append("file.txt", "more")
+json.delete("file.txt")
+json.rename("old.txt", "new.txt")
+json.copy("src.txt", "dst.txt")
+json.size("file.txt")
+json.mkdir("path/to/dir")
+json.list("some/folder")
+json.is_file("file.txt")
+json.is_dir("folder")
+json.read_lines("file.txt")
+json.join("path", "to", "file.txt")
+json.basename("path/to/file.txt")   -- file.txt
+json.dirname("path/to/file.txt")    -- path/to
+json.extension("path/to/file.txt")  -- txt
+json.stem("path/to/file.txt")       -- file
+```
+
+---
+
+## Superstring Token Reference
 
 | Token | Decoded As |
 |---|---|
 | `true` | `true` |
 | `false` | `false` |
-| `yes` | `true` |
-| `no` | `false` |
+| `yes` *(superstring mode)* | `true` |
+| `no` *(superstring mode)* | `false` |
 | `null` | `json.null` |
-
-`null` always taketh precedence over `no` — the parser checketh `null` first, so there is no ambiguity between the two.
-
----
-
-## Strict Mode — RFC 8259 Fidelity
-
-Strict mode is built directly into `json.lua`. Pass `{ strict = true }`:
-
-```lua
-json.decode('{"a":1,"a":2}', { strict = true })
--- Great Error: duplicate key "a" not allowed (RFC 8259)
-
-json.decode('01', { strict = true })
--- Great Error: leading zeros not allowed (RFC 8259)
-
-json.encode({ n = 0/0 }, { strict = true })
--- Great Error: non-finite number is not allowed in strict mode
-```
-
-Both modes may be combined:
-
-```lua
-json.decode('{"enabled":yes,"count":42}', { strict = true, superstring = true })
--- { enabled = true, count = 42 }
-```
-
-### Validation
-
-```lua
-local ok = json.validate('{"a":1}')
--- true
-
-local ok, err = json.validate('{"a":1,"a":2}')
--- false, "duplicate key..."
-
-json.is_valid_utf8("héllo")   -- true
-json.is_valid_utf8("\xFF")    -- false
-```
-
----
-
-## The Great Error
-
-When things go awry, `json.lua` speaketh loudly. Instead of a bare `nil` or a plain Lua error, it printeth to stderr in full colour with source, message, detail, hint, and stack trace:
-
-```
-╔══ ERROR ══════════════════════════════════════╗
-║  source  : json.decode
-║  message : unexpected character "}" at position 13
-║  detail  : got: "}"
-║  hint    : check for invalid characters or unquoted strings
-║  trace   :
-║    at myscript.lua:10
-╚═══════════════════════════════════════════════╝
-```
-
-This requireth nothing from thee — it simply happeneth whenever a fault is detected.
-
-### Configuring the Great Error from json.lua
-
-```lua
-json.error_set_color(false)
-json.error_set_trace(false)
-json.error_set_level(json.WARNING)
-json.error_reset()
-```
-
-`error_set_color(false)` — disableth ANSI colour codes, useful when writing to a plain log file.
-`error_set_trace(false)` — disableth the stack trace lines.
-`error_set_level(level)` — setteth the minimum severity that will be displayed. Levels are `json.FATAL`, `json.ERROR`, `json.WARNING`, `json.INFO`.
-`error_reset()` — restoreth all settings to their defaults.
-
-### Installing a Custom Handler
-
-If thou desirest to redirect errors to thy own logging system:
-
-```lua
-json.error_set_handler(function(level, source, message, detail, hint, formatted)
-    my_logger.write(level.label .. " [" .. source .. "] " .. message)
-end)
-```
-
-When a handler is installed, the default stderr output is suppressed entirely.
-
-### Using the greaterror.lua Companion
-
-If thou preferest to configure error display through a dedicated name:
-
-```lua
-local greaterror = require("json/greaterror")
-
-greaterror.set_color(false)
-greaterror.set_trace(false)
-greaterror.set_level(greaterror.WARNING)
-greaterror.reset()
-
-greaterror.set_handler(function(level, source, message, detail, hint, formatted)
-    my_logger.write(formatted)
-end)
-```
-
-This is identical to calling `json.error_*` — the companion merely giveth it a different name for readability.
-
-### Severity Levels
-
-| Level | Behaviour |
-|---|---|
-| `json.FATAL` | Print Great Error + `os.exit(1)` |
-| `json.ERROR` | Print Great Error + raise Lua error |
-| `json.WARNING` | Print only, never raise |
-| `json.INFO` | Print only, never raise |
-
----
-
-## The PathFiles Module
-
-`PathFiles.lua` governeth all file and directory dealings.
-
-```lua
-local PathFiles = require("json/PathFiles")
-```
-
-### Reading
-
-```lua
-local content = PathFiles.read("file.txt")
-local lines   = PathFiles.read_lines("file.txt")
-local bytes   = PathFiles.size("file.txt")
-```
-
-### Writing
-
-```lua
-PathFiles.write("file.txt", "hello world")
-PathFiles.append("file.txt", "\nmore words")
-```
-
-### Checking
-
-```lua
-PathFiles.exists("file.txt")
-PathFiles.is_file("file.txt")
-PathFiles.is_dir("some/folder")
-```
-
-### Moving and Copying
-
-```lua
-PathFiles.copy("source.txt", "destination.txt")
-PathFiles.rename("old.txt", "new.txt")
-PathFiles.delete("unwanted.txt")
-```
-
-### Directories
-
-```lua
-PathFiles.mkdir("path/to/new/dir")
-local entries = PathFiles.list("some/folder")
-```
-
-### Path Utilities
-
-```lua
-PathFiles.join("path", "to", "file.txt")   -- path/to/file.txt
-PathFiles.basename("path/to/file.txt")     -- file.txt
-PathFiles.dirname("path/to/file.txt")      -- path/to
-PathFiles.extension("path/to/file.txt")    -- txt
-PathFiles.stem("path/to/file.txt")         -- file
-```
 
 ---
 
@@ -388,58 +251,43 @@ PathFiles.stem("path/to/file.txt")         -- file
 
 | Situation | Behaviour |
 |---|---|
-| `nan` / `inf` in encode | Encoded as `null` — Great Error in strict mode |
-| Circular reference | Great Error thrown |
-| Depth over 512 | Great Error thrown |
-| `nil` value in table | Key skipped silently |
-| Mixed table (int + string keys) | Encoded as object |
-| Sequential integer keys | Encoded as array |
-| UTF-8 strings | Passed through as-is |
-| `\uXXXX` escape in decode | Converted to UTF-8 |
-| Surrogate pairs `\uD800\uDC00` | Correctly decoded to UTF-8 |
-| JSON `null` decoded | Returns `json.null` sentinel |
-| Trailing garbage | Great Error thrown |
-| Duplicate keys in strict mode | Great Error thrown |
-| Leading zeros in strict mode | Great Error thrown |
-| `yes` / `no` in superstring mode | Decoded as `true` / `false` |
+| `nan` / `inf` | Encoded as `null` |
+| Circular reference | Error |
+| Depth over 512 | Error |
+| `nil` table value | Key skipped |
+| Sequential integer keys | Array |
+| Mixed / string keys | Object |
+| `\uXXXX` in decode | Converted to UTF-8 |
+| Surrogate pairs | Correctly decoded |
+| Duplicate keys in strict mode | Error |
+| Leading zeros in strict mode | Error |
+| Trailing garbage | Error |
 
 ---
 
 ## Compatibility
 
-| Platform | Status |
+| Platform | Compiler | Status |
+|---|---|---|
+| Linux x86\_64 | gcc / clang | ✅ |
+| Linux arm64 | gcc / clang | ✅ |
+| Android Termux arm64 | clang | ✅ |
+| macOS x86\_64 / arm64 | clang | ✅ |
+| Windows x86\_64 | MinGW / MSVC | ✅ |
+
+| Lua Version | Status |
 |---|---|
-| Linux x86\_64 | ✅ |
-| Linux arm64 / Android Termux | ✅ |
-| macOS | ✅ |
-| Windows | ✅ |
-| Lua 5.1 | ✅ |
-| Lua 5.2 | ✅ |
-| Lua 5.3 | ✅ |
-| Lua 5.4 | ✅ |
+| 5.1 | ✅ |
+| 5.2 | ✅ |
+| 5.3 | ✅ |
+| 5.4 | ✅ |
+| LuaJIT | ✅ |
 
 ---
 
-## The Module Manifest
+## License
 
-```
-module json
+BSD 2-Clause — maintained by **TheDevinLabs**
 
-count as = [library]
+[tenor_gif2254601464405110964.gif](/user_uploads/92126/dVQbjvFQ2T-XTfpJBMx1_yoE/tenor_gif2254601464405110964.gif)
 
-include json.lua
-include PathFiles.lua
-include superstring.lua
-include greaterror.lua
-```
-
----
-
-## License & Covenant of Fair Use
-
-This work is bound by the terms of the BSD 2-Clause Simplified License.
-
-* **An Open Source:** Thou art granted full liberty to employ, alter, and distribute these codes as seest fit.
-* **A Solemn Disclaimer:** Whilst thou mayest use this craft for any noble purpose, thou shalt not covet nor steal the name of this project, nor falsely proclaim it as thine own invention.
-
-Maintained with due diligence by the guild of **TheDevinLabs**
