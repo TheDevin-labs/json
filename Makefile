@@ -1,5 +1,6 @@
 CC     ?= gcc
-CFLAGS ?= -O2 -std=c99 -Wall -Wextra -fPIC
+CFLAGS ?= -O3 -std=c99 -Wall -Wextra -fPIC
+TARGET  = json
 
 UNAME := $(shell uname -s 2>/dev/null || echo Windows)
 ARCH  := $(shell uname -m 2>/dev/null || echo unknown)
@@ -41,30 +42,24 @@ ifeq ($(PLATFORM),windows)
     LUA_LIB ?= -LC:/lua -llua54
 endif
 
+OUT = $(TARGET)$(EXT)
+
 .PHONY: all linux android macos windows clean info
 
-all: json$(EXT) superstring$(EXT) pathfiles$(EXT)
-
+all: $(OUT)
 linux:   ; $(MAKE) PLATFORM=linux
 android: ; $(MAKE) PLATFORM=android
 macos:   ; $(MAKE) PLATFORM=macos
 windows: ; $(MAKE) PLATFORM=windows CC=x86_64-w64-mingw32-gcc
 
-json$(EXT): json.c cluajit.h
+$(OUT): json.c
 	$(CC) $(CFLAGS) $(LUA_INC) $(LDFLAGS) -o $@ $< $(LUA_LIB) -lm
-
-superstring$(EXT): superstring.c cluajit.h
-	$(CC) $(CFLAGS) $(LUA_INC) $(LDFLAGS) -o $@ $< $(LUA_LIB) -lm
-
-pathfiles$(EXT): PathFiles.c cluajit.h
-	$(CC) $(CFLAGS) $(LUA_INC) $(LDFLAGS) -o $@ $< $(LUA_LIB)
 
 clean:
-	rm -f *.so *.dylib *.dll *.o
+	rm -f $(TARGET).so $(TARGET).dylib $(TARGET).dll *.o
 
 info:
 	@echo "Platform : $(PLATFORM)"
 	@echo "Arch     : $(ARCH)"
+	@echo "Output   : $(OUT)"
 	@echo "CC       : $(CC)"
-	@echo "LUA_INC  : $(LUA_INC)"
-	@echo "LUA_LIB  : $(LUA_LIB)"
